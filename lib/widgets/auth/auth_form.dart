@@ -4,7 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/widgets/pickers/user_image_picker.dart';
 
 class AuthForm extends StatefulWidget {
-  const AuthForm({Key? key}) : super(key: key);
+  final bool isLoading;
+  final void Function(
+    String email,
+    String password,
+    String userName,
+    //File image,
+    bool isLogin,
+    BuildContext ctx,
+  ) submitFn;
+
+  AuthForm(
+    this.submitFn,
+    this.isLoading,
+  );
 
   @override
   State<AuthForm> createState() => _AuthFormState();
@@ -12,14 +25,26 @@ class AuthForm extends StatefulWidget {
 
 class _AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
+  var _isLogin = true;
   String _userEmail = '';
   String _userName = '';
   String _userPassword = '';
 
   void _trySubmit() {
     final isValid = _formKey.currentState!.validate();
+    FocusScope.of(context).unfocus();
     if (isValid) {
       _formKey.currentState!.save();
+      print(_userEmail);
+      print(_userName);
+      print(_userPassword);
+      widget.submitFn(
+        _userEmail,
+        _userName,
+        _userPassword,
+        _isLogin,
+        context,
+      );
     }
   }
 
@@ -35,7 +60,7 @@ class _AuthFormState extends State<AuthForm> {
               key: _formKey,
               child: Column(
                 children: [
-                  UserImagePicker(),
+                  if (!_isLogin) UserImagePicker(),
                   TextFormField(
                     validator: (value) {
                       if (value!.isEmpty) {
@@ -57,21 +82,22 @@ class _AuthFormState extends State<AuthForm> {
                     },
                   ),
                   SizedBox(),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please enter the username.";
-                      } else if (value.length <= 8) {
-                        return "Username must have at least 8 charecters.";
-                      }
-                      return null;
-                    },
-                    decoration:
-                        InputDecoration(hintText: "Enter your username"),
-                    onSaved: (newValue) {
-                      _userName = newValue!;
-                    },
-                  ),
+                  if (!_isLogin)
+                    TextFormField(
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter the username.";
+                        } else if (value.length <= 8) {
+                          return "Username must have at least 8 charecters.";
+                        }
+                        return null;
+                      },
+                      decoration:
+                          InputDecoration(hintText: "Enter your username"),
+                      onSaved: (newValue) {
+                        _userName = newValue!;
+                      },
+                    ),
                   SizedBox(),
                   TextFormField(
                     validator: (value) {
@@ -89,14 +115,19 @@ class _AuthFormState extends State<AuthForm> {
                       _userPassword = newValue!;
                     },
                   ),
-                  SizedBox(),
+                  SizedBox(height: 15),
                   ElevatedButton(
-                    onPressed: () {},
-                    child: Text("Submit"),
+                    onPressed: _trySubmit,
+                    child: Text(_isLogin ? 'Login' : 'Signup'),
                   ),
                   TextButton(
-                    onPressed: () {},
-                    child: Text('Already a user'),
+                    onPressed: () {
+                      setState(() {
+                        _isLogin = !_isLogin;
+                      });
+                    },
+                    child: Text(
+                        _isLogin ? 'Create new account' : 'Already a user'),
                   ),
                 ],
               ),
