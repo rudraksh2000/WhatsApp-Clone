@@ -1,140 +1,192 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:whatsapp_clone/controllers/auth_manager.dart';
+import 'package:whatsapp_clone/screens/users_screen.dart';
+import 'package:whatsapp_clone/utils/app_theme.dart';
+import 'package:whatsapp_clone/widgets/auth/form_field_user.dart';
 import 'package:whatsapp_clone/widgets/pickers/user_image_picker.dart';
 
 class AuthForm extends StatefulWidget {
-  final bool isLoading;
-  final void Function(
-    String email,
-    String password,
-    String userName,
-    //File image,
-    bool isLogin,
-    BuildContext ctx,
-  ) submitFn;
-
-  AuthForm(
-    this.submitFn,
-    this.isLoading,
-  );
-
   @override
   State<AuthForm> createState() => _AuthFormState();
 }
 
 class _AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
-  var _isLogin = true;
-  String _userEmail = '';
-  String _userName = '';
-  String _userPassword = '';
+  File? _pickedImage;
+  var _isLogin = false;
 
-  void _trySubmit() {
-    final isValid = _formKey.currentState!.validate();
-    FocusScope.of(context).unfocus();
-    if (isValid) {
-      _formKey.currentState!.save();
-      print(_userEmail);
-      print(_userName);
-      print(_userPassword);
-      widget.submitFn(
-        _userEmail,
-        _userName,
-        _userPassword,
-        _isLogin,
-        context,
-      );
-    }
+  void _selectImage(File pickedImage) {
+    //log(pickedImage.path);
+    _pickedImage = pickedImage;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        margin: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+    return Consumer<AuthManager>(
+      builder: (context, authManager, child) {
+        return Container(
+          height: _isLogin ? 270 : 480,
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppTheme.bgRed,
+            borderRadius: BorderRadius.circular(5),
+            //border: Border.all(width: 2),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black,
+                offset: Offset(
+                  5.0,
+                  5.0,
+                ),
+                blurRadius: 10.0,
+                spreadRadius: 2.0,
+              ), //BoxShadow
+              BoxShadow(
+                color: Colors.white,
+                offset: Offset(0.0, 0.0),
+                blurRadius: 0.0,
+                spreadRadius: 0.0,
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(8),
+          child: SingleChildScrollView(
             child: Form(
               key: _formKey,
               child: Column(
                 children: [
-                  if (!_isLogin) UserImagePicker(),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please enter the email address.";
-                      } else if (!value.contains('@') ||
-                          !value.contains('.') ||
-                          value.indexOf('@') > value.indexOf('.') ||
-                          value.startsWith('@') ||
-                          value.endsWith('@') ||
-                          value.startsWith('.') ||
-                          value.endsWith('.')) {
-                        return "Please enter a valid email address.";
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(hintText: "Enter your email"),
-                    onSaved: (newValue) {
-                      _userEmail = newValue!;
-                    },
+                  if (!_isLogin) UserImagePicker(_selectImage),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FormFieldUser(
+                        fieldText: "Email Id",
+                        controller: authManager.emailId,
+                        hintText: "Enter email Id",
+                        inputType: TextInputType.emailAddress,
+                        inputAction: TextInputAction.next,
+                        isPassword: false,
+                        validator: (p0) {
+                          if (p0!.isEmpty) {
+                            return "Email Id cannot be empty!";
+                          }
+                          final bool emailValid = RegExp(
+                                  r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                              .hasMatch(p0);
+                          if (!emailValid) {
+                            return "Email Id is not valid";
+                          }
+                          return null;
+                        },
+                      ),
+                      if (!_isLogin)
+                        FormFieldUser(
+                          fieldText: "Username",
+                          controller: authManager.userName,
+                          hintText: "Enter username",
+                          inputType: TextInputType.text,
+                          inputAction: TextInputAction.next,
+                          isPassword: false,
+                          validator: (p0) {
+                            if (p0!.isEmpty) {
+                              return "Username cannot be empty!";
+                            }
+                            return null;
+                          },
+                        ),
+                      FormFieldUser(
+                        fieldText: "Password",
+                        controller: authManager.userPassword,
+                        hintText: "Enter password",
+                        inputType: TextInputType.text,
+                        inputAction: TextInputAction.next,
+                        isPassword: true,
+                        validator: (p0) {
+                          if (p0!.isEmpty) {
+                            return "Password cannot be empty!";
+                          } else if (p0.length < 8) {
+                            return "Password should contain 8 charecters!";
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
-                  SizedBox(),
-                  if (!_isLogin)
-                    TextFormField(
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Please enter the username.";
-                        } else if (value.length <= 8) {
-                          return "Username must have at least 8 charecters.";
-                        }
-                        return null;
-                      },
-                      decoration:
-                          InputDecoration(hintText: "Enter your username"),
-                      onSaved: (newValue) {
-                        _userName = newValue!;
-                      },
-                    ),
-                  SizedBox(),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please enter the password.";
-                      } else if (value.length <= 6) {
-                        return "Password must have at least 6 charecters.";
-                      }
-                      return null;
-                    },
-                    decoration:
-                        InputDecoration(hintText: "Enter your password"),
-                    obscureText: true,
-                    onSaved: (newValue) {
-                      _userPassword = newValue!;
-                    },
-                  ),
-                  SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: _trySubmit,
-                    child: Text(_isLogin ? 'Login' : 'Signup'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isLogin = !_isLogin;
-                      });
-                    },
-                    child: Text(
-                        _isLogin ? 'Create new account' : 'Already a user'),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () async {
+                          // final isValid = _formKey.currentState!.validate();
+                          FocusScope.of(context).unfocus();
+                          if (_isLogin) {
+                            String isValid = await authManager.loginUser(
+                              userEmail: authManager.emailId.text,
+                              userPassword: authManager.userPassword.text,
+                            );
+                            log(isValid);
+                            if (isValid.toString() == 'Signed In') {
+                              Navigator.of(context).pushNamed(
+                                  UsersScreen.routeName,
+                                  arguments: authManager.userName.text);
+                            }
+                          } else {
+                            if (_formKey.currentState!.validate()) {
+                              authManager.submitUserCredentials(
+                                image: _pickedImage!,
+                              );
+                              Navigator.of(context).pushNamed(
+                                  UsersScreen.routeName,
+                                  arguments: authManager.userName.text);
+                              return _formKey.currentState!.save();
+                            }
+                            return;
+                          }
+                        },
+                        style: AppTheme.btnStyleCard,
+                        child: Text(
+                          _isLogin ? "Login" : "Create user",
+                          style: AppTheme.btnText,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isLogin = !_isLogin;
+                          });
+                        },
+                        child: Text(
+                          _isLogin ? "Create user" : "Already a user",
+                          style: AppTheme.btnTextSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
+
+class AuthScreenArguments {
+  final String userId;
+  final String userName;
+
+  AuthScreenArguments(
+    this.userId,
+    this.userName,
+  );
 }
