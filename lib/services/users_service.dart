@@ -22,7 +22,6 @@ class UsersService {
     final snapshot = await db
         .collection('users')
         .where('userEmail', isNotEqualTo: email)
-        .where('userPassword', isNotEqualTo: password)
         .get();
     final data = snapshot.docs.map((e) => Users.fromSnapShot(e)).toList();
     return data;

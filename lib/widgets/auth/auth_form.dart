@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:whatsapp_clone/controllers/auth_manager.dart';
+import 'package:whatsapp_clone/controllers/users_manager.dart';
 import 'package:whatsapp_clone/screens/users_screen.dart';
 import 'package:whatsapp_clone/utils/app_theme.dart';
 import 'package:whatsapp_clone/widgets/auth/form_field_user.dart';
@@ -31,6 +32,7 @@ class _AuthFormState extends State<AuthForm> {
 
   @override
   Widget build(BuildContext context) {
+    String email, password;
     return Consumer<AuthManager>(
       builder: (context, authManager, child) {
         return Container(
@@ -128,29 +130,46 @@ class _AuthFormState extends State<AuthForm> {
                         onPressed: () async {
                           // final isValid = _formKey.currentState!.validate();
                           FocusScope.of(context).unfocus();
-                          if (_isLogin) {
+                          if (_isLogin == true) {
+                            email = authManager.emailId.text;
+                            password = authManager.userPassword.text;
                             String isValid = await authManager.loginUser(
                               userEmail: authManager.emailId.text,
-                              userPassword: authManager.userPassword.text,
+                              password: authManager.userPassword.text,
                             );
                             log(isValid);
                             if (isValid.toString() == 'Signed In') {
+                              Provider.of<UsersManager>(context, listen: false)
+                                  .getUserDetails(
+                                email,
+                                password,
+                              );
                               Navigator.of(context).pushNamed(
-                                  UsersScreen.routeName,
-                                  arguments: authManager.userName.text);
+                                UsersScreen.routeName,
+                                arguments: AuthScreenArguments(email, password),
+                              );
                             }
                           } else {
                             if (_formKey.currentState!.validate()) {
+                              email = authManager.emailId.text;
+                              password = authManager.userPassword.text;
                               authManager.submitUserCredentials(
                                 image: _pickedImage!,
                               );
+                              Provider.of<UsersManager>(context, listen: false)
+                                  .getUserDetails(
+                                email,
+                                password,
+                              );
                               Navigator.of(context).pushNamed(
                                   UsersScreen.routeName,
-                                  arguments: authManager.userName.text);
-                              return _formKey.currentState!.save();
+                                  arguments:
+                                      AuthScreenArguments(email, password));
+                              //return _formKey.currentState!.save();
                             }
                             return;
                           }
+                          authManager.dispose();
                         },
                         style: AppTheme.btnStyleCard,
                         child: Text(
@@ -182,11 +201,11 @@ class _AuthFormState extends State<AuthForm> {
 }
 
 class AuthScreenArguments {
-  final String userId;
-  final String userName;
+  final String email;
+  final String password;
 
   AuthScreenArguments(
-    this.userId,
-    this.userName,
+    this.email,
+    this.password,
   );
 }

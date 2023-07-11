@@ -2,6 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:whatsapp_clone/controllers/auth_manager.dart';
+import 'package:whatsapp_clone/controllers/messages_manager.dart';
+import 'package:whatsapp_clone/controllers/toast_manager.dart';
+import 'package:whatsapp_clone/controllers/users_manager.dart';
 import 'package:whatsapp_clone/screens/auth_screen.dart';
 import 'package:whatsapp_clone/screens/users_screen.dart';
 import './screens/chat_screen.dart';
@@ -22,6 +25,15 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (context) => AuthManager(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ToastManager(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UsersManager(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => MessagesManager(),
         )
       ],
       child: MaterialApp(
@@ -29,6 +41,7 @@ class MyApp extends StatelessWidget {
         home: AuthScreen(),
         routes: {
           UsersScreen.routeName: (ctx) => UsersScreen(),
+          ChatScreen.routeName: (ctx) => ChatScreen(),
         },
       ),
     );

@@ -36,6 +36,7 @@ class AppTheme {
   static const primaryColor = Color(0xFF2697FF);
   static const secondaryColor = nearlyWhite;
   static const bgColor = Color(0xFFF9F9F9);
+  static const Color nearlyGrey = Color.fromARGB(255, 182, 183, 184);
 
   // gradients
   static const Color gradient1 = Color(0xFFA0B5EB);

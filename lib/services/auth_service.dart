@@ -47,7 +47,7 @@ class AuthService {
         email: auth.userEmail, password: auth.userPassword);
     await FirebaseFirestore.instance
         .collection('users')
-        .doc(authResult.user!.uid)
+        .doc(auth.userId)
         .set(auth.toMap())
         .then((value) {
       ToastManager().successToast("Succesfully added");

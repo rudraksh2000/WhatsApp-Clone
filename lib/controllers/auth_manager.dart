@@ -46,29 +46,27 @@ class AuthManager with ChangeNotifier {
     );
     await authService.signUp(auth: auth).then((value) {
       ToastManager().successToast(value!);
-      emailId.clear();
-      userPassword.clear();
-      userName.clear();
+      emailId = TextEditingController();
+      userName = TextEditingController();
+      userPassword = TextEditingController();
     });
-  }
-
-  String getUserId() {
-    return userId;
   }
 
   Future<String> loginUser({
     required String userEmail,
-    required String userPassword,
+    required String password,
   }) async {
     String validUser = "";
     await authService
         .signIn(
       emailId: userEmail,
-      password: userPassword,
+      password: password,
     )
         .then((value) {
       ToastManager().successToast(value!);
       validUser = value;
+      emailId = TextEditingController();
+      userPassword = TextEditingController();
     });
     log(validUser);
     return validUser;
@@ -76,8 +74,12 @@ class AuthManager with ChangeNotifier {
 
   @override
   void dispose() {
-    AuthManager;
+    emailId = TextEditingController();
+    userPassword = TextEditingController();
+    userName = TextEditingController();
+    authService = AuthService();
+    userProfileImage = "";
+    userId = "";
     super.dispose();
-    notifyListeners();
   }
 }
